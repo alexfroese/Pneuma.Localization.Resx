@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="Hello World">
+    <value>Hello, world!</value>
+  </data>
+  <data name="Whatever">
+    <value>I need better examples sometimes</value>
+  </data>
+  <data name="Asdf">
+    <value>This is getting ridiculous</value>
+  </data>
+  <data name="I don't know anymore">
+    <value>I don't know anymore</value>
+  </data>
+  <data name="this is stupid">
+    <value>this is stupid</value>
+  </data>
+</root>

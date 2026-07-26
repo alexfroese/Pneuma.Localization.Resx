@@ -1,0 +1,8 @@
+<Project>
+  <ItemGroup>
+    <AdditionalFiles Include="**\*.resx" />
+
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleProperty Include="MSBuildProjectDirectory" />
+  </ItemGroup>
+</Project>
