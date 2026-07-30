@@ -30,7 +30,7 @@
       PackagePath="analyzers/dotnet/cs"
     />
     <None
-      Include="$(ArtifactsDirectory)\generators\Pneuma.Localization.Resx.Fixers.dll"
+      Include="$(ArtifactsDirectory)\code-fixes\Pneuma.Localization.Resx.Fixers.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
     />

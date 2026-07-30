@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
-      - run: dotnet restore src/Pneuma.Localization.Resx.CodeFixers
-      - run: dotnet build src/Pneuma.Localization.Resx.CodeFixers --no-restore
-      - run: dotnet pack --version "${GITHUB_REF_NAME#v}" -c Release -o publish --no-restore src/Pneuma.Localization.Resx.CodeFixers
+      - run: dotnet restore src/Pneuma.Localization.Resx.Fixers
+      - run: dotnet build src/Pneuma.Localization.Resx.Fixers --no-restore
+      - run: dotnet pack --version "${GITHUB_REF_NAME#v}" -c Release -o publish --no-restore src/Pneuma.Localization.Resx.Fixers
       - uses: NuGet/login@v1
         id: login
         with:
