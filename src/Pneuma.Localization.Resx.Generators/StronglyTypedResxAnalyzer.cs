@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
-namespace ResxGen.Generators;
+namespace Pneuma.Localization.Resx.Generators;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer

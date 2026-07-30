@@ -1,9 +1,0 @@
-<Solution>
-  <Folder Name="/sample/">
-    <Project Path="sample/SampleApi/SampleApi.csproj" />
-  </Folder>
-  <Folder Name="/src/">
-    <Project Path="src/ResxGen.Fixers/ResxGen.Fixers.csproj" />
-    <Project Path="src/ResxGen.Generators/ResxGen.Generators.csproj" />
-  </Folder>
-</Solution>

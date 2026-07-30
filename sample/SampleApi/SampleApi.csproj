@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
     <ProjectReference
-      Include="..\..\src\ResxGen.Generators\ResxGen.Generators.csproj"
+      Include="..\..\src\Pneuma.Localization.Resx.Generators\Pneuma.Localization.Resx.Generators.csproj"
       OutputItemType="Analyzer"
       ReferenceOutputAssembly="false"
     />
     <ProjectReference
-      Include="..\..\src\ResxGen.Fixers\ResxGen.Fixers.csproj"
+      Include="..\..\src\Pneuma.Localization.Resx.Fixers\Pneuma.Localization.Resx.Fixers.csproj"
       OutputItemType="Analyzer"
       ReferenceOutputAssembly="false"
     />

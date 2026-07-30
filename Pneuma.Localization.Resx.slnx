@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/sample/">
+    <Project Path="sample/SampleApi/SampleApi.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Pneuma.Localization.Resx.Fixers/Pneuma.Localization.Resx.Fixers.csproj" />
+    <Project Path="src/Pneuma.Localization.Resx.Generators/Pneuma.Localization.Resx.Generators.csproj" />
+  </Folder>
+</Solution>

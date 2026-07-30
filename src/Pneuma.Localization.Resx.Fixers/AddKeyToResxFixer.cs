@@ -5,9 +5,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Text;
-using ResxGen.Generators;
+using Pneuma.Localization.Resx.Generators;
 
-namespace ResxGen.Fixers;
+namespace Pneuma.Localization.Resx.Fixers;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
 public class AddKeyToResxFixer : CodeFixProvider

@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
-using ResxGen.Generators;
+using Pneuma.Localization.Resx.Generators;
 
-namespace ResxGen.Fixers;
+namespace Pneuma.Localization.Resx.Fixers;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
 public class StronglyTypedResourceFixer : CodeFixProvider

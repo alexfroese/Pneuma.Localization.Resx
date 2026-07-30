@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
-namespace ResxGen.Generators;
+namespace Pneuma.Localization.Resx.Generators;
 
 [Generator]
 public sealed class ResxSourceGenerator : IIncrementalGenerator
