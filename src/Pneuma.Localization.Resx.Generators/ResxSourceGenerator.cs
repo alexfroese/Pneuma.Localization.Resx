@@ -12,24 +12,31 @@ namespace Pneuma.Localization.Resx.Generators;
 [Generator]
 public sealed class ResxSourceGenerator : IIncrementalGenerator
 {
+    // private const string Debug = "DEBUG001";
+    //
+    // private static readonly DiagnosticDescriptor s_debug = new(
+    //     Debug,
+    //     "Debug",
+    //     "DEBUG: {0}",
+    //     "Debug",
+    //     DiagnosticSeverity.Warning,
+    //     isEnabledByDefault: true
+    // );
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var resxFiles = context
             .AdditionalTextsProvider.Where(file =>
             {
                 if (Path.GetExtension(file.Path) != ".resx")
-                {
                     return false;
-                }
 
                 var name = Path.GetFileNameWithoutExtension(file.Path);
 
                 var lastDot = name.LastIndexOf('.');
 
                 if (lastDot == -1)
-                {
                     return true;
-                }
 
                 var maybeCulture = name.Substring(lastDot + 1);
 
@@ -54,9 +61,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                             out var rootNamespace
                         ) || rootNamespace is null
                     )
-                    {
                         throw new InvalidOperationException("unable to obtain namespace");
-                    }
 
                     if (
                         !options.GlobalOptions.TryGetValue(
@@ -64,16 +69,12 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                             out var projectDirectory
                         ) || projectDirectory is null
                     )
-                    {
                         throw new InvalidOperationException("unable to obtain project directory");
-                    }
 
                     var index = file.Path.IndexOf(projectDirectory);
 
                     if (index == -1)
-                    {
                         throw new InvalidOperationException("no common path");
-                    }
 
                     var relativePath = file.Path.Substring(index + projectDirectory.Length + 1);
 
@@ -118,7 +119,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                     return;
 
                 var candidateTypeName =
-                    $"{rootNamespace}.{Path.GetFileNameWithoutExtension(relativePath).Replace('\\', '.').Replace('/', '.')}";
+                    $"{rootNamespace}.{string.Join(".", Path.GetDirectoryName(relativePath), Path.GetFileNameWithoutExtension(relativePath)).Replace('\\', '.').Replace('/', '.')}";
 
                 INamedTypeSymbol? resourceClassType;
 
@@ -127,24 +128,18 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                     resourceClassType = compilation.GetTypeByMetadataName(candidateTypeName);
 
                     if (resourceClassType is not null)
-                    {
                         break;
-                    }
 
                     var dot = candidateTypeName.IndexOf('.', rootNamespace.Length + 1);
 
                     if (dot == -1)
-                    {
                         break;
-                    }
 
                     candidateTypeName = $"{rootNamespace}.{candidateTypeName.Substring(dot + 1)}";
                 }
 
                 if (resourceClassType is null)
-                {
                     return;
-                }
 
                 var extensionSource = ExtensionSourceGenerator(
                     resourceClassType,

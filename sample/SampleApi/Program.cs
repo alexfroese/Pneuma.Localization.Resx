@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Localization;
 using SampleApi;
+using SampleApi.Some.Deeply.Nested;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -24,6 +25,8 @@ builder
     .Services.AddHealthChecks()
     .AddCheck("api", () => HealthCheckResult.Healthy(), tags: ["api"]);
 
+builder.Services.AddTransient<Service>();
+
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -42,6 +45,11 @@ app.MapHealthChecks(
 app.MapGet(
     "hello",
     ([FromServices] IStringLocalizer<Hello> localizer) => TypedResults.Ok(localizer.Hello_World)
+);
+
+app.MapGet(
+    "from-service",
+    ([FromServices] Service service) => TypedResults.Ok(service.GetString())
 );
 
 await app.RunAsync();
