@@ -1,8 +1,10 @@
 'on':
+  - workflow_call
   - push
+  - pull_request
 jobs:
   formatting:
-    name: Check, build, test
+    name: Check, test
     runs-on: ubuntu-latest
     permissions:
       contents: read

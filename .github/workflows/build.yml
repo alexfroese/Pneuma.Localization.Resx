@@ -2,7 +2,10 @@
   push:
     tags: v*
 jobs:
-  formatting:
+  check:
+    uses: ./.github/workflows/check-test.yml
+  publish:
+    needs: check
     name: Check, build, test
     runs-on: ubuntu-latest
     permissions:
