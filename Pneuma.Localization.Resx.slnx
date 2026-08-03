@@ -6,4 +6,7 @@
     <Project Path="src/Pneuma.Localization.Resx.Fixers/Pneuma.Localization.Resx.Fixers.csproj" />
     <Project Path="src/Pneuma.Localization.Resx.Generators/Pneuma.Localization.Resx.Generators.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Pneuma.Localization.UnitTests/Pneuma.Localization.UnitTests.csproj" />
+  </Folder>
 </Solution>

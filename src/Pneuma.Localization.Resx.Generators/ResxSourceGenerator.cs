@@ -172,6 +172,9 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         indentedWriter.WriteLine($"namespace {resourceClassType.ContainingNamespace};");
         indentedWriter.WriteLine();
         indentedWriter.WriteLine(
+            "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]"
+        );
+        indentedWriter.WriteLine(
             $"public static class {resourceClassType.Name}StringLocalizerExtensions"
         );
         indentedWriter.WriteLine("{");
@@ -192,7 +195,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
 
             indentedWriter.WriteLine("/// <summary>");
             indentedWriter.WriteLine(
-                $"///  Gets a string like '{SecurityElement.Escape(value)}' as a <see cref=\"{localizedString.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)}\" />"
+                $"///  Gets a string like '{SecurityElement.Escape(value)}' as a <see cref=\"{localizedString.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}\" />"
             );
             indentedWriter.WriteLine("/// </summary>");
             indentedWriter.WriteLine(
@@ -207,9 +210,6 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         indentedWriter.Indent--;
 
         indentedWriter.WriteLine("}");
-
-        indentedWriter.Flush();
-        stringWriter.Flush();
 
         return stringWriter.ToString();
     }
