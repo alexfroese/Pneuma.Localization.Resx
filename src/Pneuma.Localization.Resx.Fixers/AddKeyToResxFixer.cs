@@ -22,6 +22,14 @@ public class AddKeyToResxFixer : CodeFixProvider
         var project = context.Document.Project;
         var solution = project.Solution;
 
+        if (
+            !project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                "build_property.MSBuildProjectDirectory",
+                out var projectDir
+            )
+        )
+            return Task.CompletedTask;
+
         foreach (var diagnostic in context.Diagnostics)
         {
             if (
@@ -31,10 +39,9 @@ public class AddKeyToResxFixer : CodeFixProvider
             if (!diagnostic.Properties.TryGetValue("key", out var key) || key is null)
                 continue;
 
-            // this is not a perfect check - think of ways to improve
             if (
                 project.AdditionalDocuments.FirstOrDefault(f =>
-                    Path.GetFileName(f.FilePath) == fileName
+                    f.FilePath == Path.Combine(projectDir, fileName)
                 )
                 is not TextDocument document
             )

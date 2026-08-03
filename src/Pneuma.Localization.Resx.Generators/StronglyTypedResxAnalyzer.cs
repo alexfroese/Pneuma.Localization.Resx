@@ -25,7 +25,7 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor s_addKeyToResourceFile = new(
         AddKeyToResourceFile,
         "AddKeyToResx",
-        "Add key '{0}' to {1}.resx",
+        "Add key '{0}' to {1}",
         "Resource",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true
@@ -92,6 +92,30 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
         )
             return;
 
+        if (
+            context.Compilation.GetTypeByMetadataName(
+                "Pneuma.Localization.GeneratedFromResxFileAttribute"
+            )
+            is not INamedTypeSymbol generatedFromResxAttribute
+        )
+            return;
+
+        if (
+            extensionContainer
+                .GetAttributes()
+                .FirstOrDefault(a =>
+                    SymbolEqualityComparer.Default.Equals(
+                        a.AttributeClass,
+                        generatedFromResxAttribute
+                    )
+                )
+            is not AttributeData attributeData
+        )
+            return;
+
+        if (attributeData.ConstructorArguments[0].Value is not string relativePath)
+            return;
+
         var targetExtensionParameterType = stringLocalizer.Construct(resourceType);
 
         if (
@@ -129,7 +153,7 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
         if (matchingMemberOrNull is null)
         {
             var properties = ImmutableDictionary.CreateBuilder<string, string?>();
-            properties.Add("fileName", $"{resourceType.Name}.resx");
+            properties.Add("fileName", relativePath);
             properties.Add("key", constantValue);
 
             context.ReportDiagnostic(
@@ -137,7 +161,7 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
                     s_addKeyToResourceFile,
                     context.Node.GetLocation(),
                     properties.ToImmutable(),
-                    messageArgs: [constantValue, resourceType.Name]
+                    messageArgs: [constantValue, relativePath]
                 )
             );
         }
