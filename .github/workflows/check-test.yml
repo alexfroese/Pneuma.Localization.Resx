@@ -1,0 +1,22 @@
+'on':
+  - push
+jobs:
+  formatting:
+    name: Check, build, test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+      - run: dotnet tool install -g csharpier
+      - run: csharpier check .
+      - run: dotnet restore tests/Pneuma.Localization.UnitTests
+      - run: dotnet build tests/Pneuma.Localization.UnitTests
+      - run: dotnet run --project tests/Pneuma.Localization.UnitTests
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: TestResults
+          path: '**/TestResults/**'
+
