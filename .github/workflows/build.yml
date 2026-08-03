@@ -4,6 +4,7 @@
 jobs:
   check:
     uses: ./.github/workflows/check-test.yml
+    permissions: {}
   publish:
     needs: check
     name: Check, build, test
