@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Text;
 using Pneuma.Localization.Resx.Generators;
 
-namespace Pneuma.Localization.UnitTests;
+namespace Pneuma.Localization.UnitTests.Generators;
 
 public class ResxGeneratorTests
 {
@@ -17,6 +17,7 @@ public class ResxGeneratorTests
                 namespace TestProject;
 
                 public class Hello;
+
                 """,
         };
 
@@ -36,6 +37,7 @@ public class ResxGeneratorTests
                     }
 
                     public readonly struct LocalizedString;
+
                     """,
                     Encoding.UTF8
                 )
@@ -59,6 +61,7 @@ public class ResxGeneratorTests
                         <value>i'm just looking for stupid stuff now</value>
                       </data>
                     </root>
+
                     """,
                     Encoding.UTF8
                 )
@@ -74,6 +77,7 @@ public class ResxGeneratorTests
 
                     build_property.RootNamespace = TestProject
                     build_property.MSBuildProjectDirectory = /home/user/projects/test
+
                     """,
                     Encoding.UTF8
                 )
