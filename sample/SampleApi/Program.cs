@@ -48,6 +48,12 @@ app.MapGet(
 );
 
 app.MapGet(
+    "from-program",
+    ([FromServices] IStringLocalizer<Program> localizer) =>
+        TypedResults.Ok(localizer.From_Program__now_)
+);
+
+app.MapGet(
     "from-service",
     ([FromServices] Service service) => TypedResults.Ok(service.GetString())
 );

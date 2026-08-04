@@ -4,7 +4,7 @@
 jobs:
   check:
     uses: ./.github/workflows/check-test.yml
-    permissions: {}
+    permissions: read-all
   publish:
     needs: check
     name: Check, build, test
@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
-      - run: dotnet tool install -g csharpier
-      - run: csharpier check .
+      - run: dotnet restore src/Pneuma.Localization.Resx.Fixers
+      - run: dotnet build src/Pneuma.Localization.Resx.Fixers
       - run: dotnet pack --version "${GITHUB_REF_NAME#v}" -c Release -o publish --no-restore src/Pneuma.Localization.Resx.Fixers
       - uses: NuGet/login@v1
         id: login
