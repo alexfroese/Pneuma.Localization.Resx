@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
+using Microsoft.CodeAnalysis.Simplification;
 using Pneuma.Localization.Resx.Generators;
 
 namespace Pneuma.Localization.Resx.Fixers;
@@ -32,18 +33,34 @@ public class StronglyTypedResourceFixer : CodeFixProvider
         )
             return;
 
+        var model = await context
+            .Document.GetSemanticModelAsync(context.CancellationToken)
+            .ConfigureAwait(false);
+
         foreach (var diagnostic in context.Diagnostics)
         {
             if (
                 !diagnostic.Properties.TryGetValue("memberName", out var memberName)
                 || memberName is null
             )
-                return;
+                continue;
+
+            if (
+                !diagnostic.Properties.TryGetValue("extensionContainer", out var extensionContainer)
+                || extensionContainer is null
+            )
+                continue;
+
+            if (
+                model?.Compilation.GetTypeByMetadataName(extensionContainer)
+                is not INamedTypeSymbol extensionType
+            )
+                continue;
 
             context.RegisterCodeFix(
                 CodeAction.Create(
                     "Use strongly typed accessor",
-                    ct => Fix(context.Document, node, memberName, ct),
+                    ct => Fix(context.Document, node, memberName, extensionType, ct),
                     equivalenceKey: nameof(StronglyTypedResourceFixer)
                 ),
                 diagnostic
@@ -55,6 +72,7 @@ public class StronglyTypedResourceFixer : CodeFixProvider
         Document document,
         ElementAccessExpressionSyntax node,
         string memberName,
+        INamedTypeSymbol extensionType,
         CancellationToken cancellationToken
     )
     {
@@ -62,7 +80,13 @@ public class StronglyTypedResourceFixer : CodeFixProvider
             .CreateAsync(document, cancellationToken)
             .ConfigureAwait(false);
 
-        var newNode = editor.Generator.MemberAccessExpression(node.Expression, memberName);
+        var newNode = editor
+            .Generator.TypeExpression(extensionType)
+            .CopyAnnotationsTo(
+                editor
+                    .Generator.MemberAccessExpression(node.Expression, memberName)
+                    .WithAdditionalAnnotations(Simplifier.AddImportsAnnotation)
+            );
 
         editor.ReplaceNode(node, newNode);
 

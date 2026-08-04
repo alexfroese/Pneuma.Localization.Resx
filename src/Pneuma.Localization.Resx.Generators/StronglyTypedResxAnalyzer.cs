@@ -169,6 +169,10 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
         {
             var properties = ImmutableDictionary.CreateBuilder<string, string?>();
             properties.Add("memberName", matchingMemberOrNull.Name);
+            properties.Add(
+                "extensionContainer",
+                extensionContainer.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
+            );
 
             context.ReportDiagnostic(
                 Diagnostic.Create(

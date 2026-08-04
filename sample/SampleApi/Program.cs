@@ -44,8 +44,7 @@ app.MapHealthChecks(
 
 app.MapGet(
     "hello",
-    ([FromServices] IStringLocalizer<Hello> localizer) =>
-        TypedResults.Ok(localizer.something_new__i_think)
+    ([FromServices] IStringLocalizer<Hello> localizer) => TypedResults.Ok(localizer.Whatever)
 );
 
 app.MapGet(
