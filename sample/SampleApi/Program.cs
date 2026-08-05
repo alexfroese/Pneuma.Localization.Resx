@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;

@@ -6,14 +6,16 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
-# (Please don't specify an indent_size here; that has too many unintended consequences.)
-spelling_exclusion_path = SpellingExclusions.dic
-
-# Code files
-[*.{cs,csx,vb,vbx}]
+charset = utf-8
 indent_size = 4
 insert_final_newline = true
-charset = utf-8-bom
+trim_trailing_whitespace = true
+end_of_line = lf
+
+# Code files
+
+[*.slnx]
+indent_size = 2
 
 # XML project files
 [*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
@@ -33,7 +35,6 @@ indent_size = 2
 
 # Shell script files
 [*.sh]
-end_of_line = lf
 indent_size = 2
 
 # Dotnet code style settings:
