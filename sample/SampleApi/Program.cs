@@ -1,26 +1,31 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Text.Json;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Localization;
 using SampleApi;
+using SampleApi.Extensions;
 using SampleApi.Some.Deeply.Nested;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 
-builder.Services.AddRequestLocalization(options =>
-{
-    options.DefaultRequestCulture = new RequestCulture("en");
+builder.Services.AddRequestLocalization(
+    (options) =>
+    {
+        options.DefaultRequestCulture = new("en-CA");
 
-    options.SupportedCultures = [new CultureInfo("en"), new CultureInfo("fr")];
-    options.SupportedUICultures = [new CultureInfo("en"), new CultureInfo("fr")];
+        options.SupportedCultures = [new("en-CA"), new("fr-CA")];
+        options.SupportedUICultures = [new("en-CA"), new("fr-CA")];
 
-    options.ApplyCurrentCultureToResponseHeaders = true;
-});
+        options.ApplyCurrentCultureToResponseHeaders = true;
+
+        options.RequestCultureProviders =
+        [
+            new CustomCultureProvider(options.RequestCultureProviders),
+        ];
+    }
+);
 
 builder
     .Services.AddHealthChecks()
@@ -51,12 +56,18 @@ app.MapGet(
 app.MapGet(
     "from-program",
     ([FromServices] IStringLocalizer<Program> localizer) =>
-        TypedResults.Ok(localizer.From_Program__now_)
+        TypedResults.Ok(localizer.Formattable_now(12345, 67890))
 );
 
 app.MapGet(
     "from-service",
     ([FromServices] Service service) => TypedResults.Ok(service.GetString())
+);
+
+app.MapGet(
+    "with-param",
+    ([FromServices] IStringLocalizer<Hello> localizer, [FromQuery] string test) =>
+        TypedResults.Ok(localizer.One_with_an_argument(test))
 );
 
 await app.RunAsync();

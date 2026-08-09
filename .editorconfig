@@ -14,7 +14,7 @@ end_of_line = lf
 
 # Code files
 
-[*.slnx]
+[*.{slnx,resx}]
 indent_size = 2
 
 # XML project files
