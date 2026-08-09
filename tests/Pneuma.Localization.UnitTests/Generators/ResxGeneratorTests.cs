@@ -34,6 +34,8 @@ public class ResxGeneratorTests
                     public interface IStringLocalizer<out T>
                     {
                         LocalizedString this[string name] { get; }
+
+                        LocalizedString this[string name, params object[] arguments] { get; }
                     }
 
                     public readonly struct LocalizedString;
@@ -59,6 +61,10 @@ public class ResxGeneratorTests
                       </data>
                       <data name="123 do re mi" xml:space="preserve">
                         <value>i'm just looking for stupid stuff now</value>
+                      </data>
+                      <data name="formatted" xml:space="preserve">
+                        <comment>Pneuma: string name</comment>
+                        <value>this has a {0} value</value>
                       </data>
                     </root>
 
@@ -138,6 +144,11 @@ public class ResxGeneratorTests
                             ///  Gets a string like 'i&apos;m just looking for stupid s{{'\u2026'}}' as a <see cref="global::Microsoft.Extensions.Localization.LocalizedString" />
                             /// </summary>
                             public global::Microsoft.Extensions.Localization.LocalizedString _123_do_re_mi => localizer["123 do re mi"];
+
+                            /// <summary>
+                            ///  Gets a string like 'this has a {0} value' as a <see cref="global::Microsoft.Extensions.Localization.LocalizedString" />
+                            /// </summary>
+                            public global::Microsoft.Extensions.Localization.LocalizedString Formatted(string name) => localizer["formatted", name];
                         }
                     }
 

@@ -45,7 +45,7 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
-        context.RegisterCompilationStartAction(ctx =>
+        context.RegisterCompilationStartAction(static ctx =>
         {
             // we'll reference this one a few times, so get it once for the whole compilation
             if (

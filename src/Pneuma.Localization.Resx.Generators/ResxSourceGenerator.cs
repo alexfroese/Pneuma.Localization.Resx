@@ -1,7 +1,6 @@
 using System.CodeDom.Compiler;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Text;
@@ -9,6 +8,8 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using Pneuma.Localization.Resx.Generators.Helpers;
+using Pneuma.Localization.Resx.Generators.Polyfills;
 
 namespace Pneuma.Localization.Resx.Generators;
 
@@ -33,7 +34,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var resxFiles = context
-            .AdditionalTextsProvider.Where(file =>
+            .AdditionalTextsProvider.Where(static file =>
             {
                 // not a resx, then ignore, we onyl care about resx here
                 if (Path.GetExtension(file.Path) != ".resx")
@@ -62,7 +63,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
             })
             .Combine(context.AnalyzerConfigOptionsProvider)
             .Select(
-                (input, _) =>
+                static (input, _) =>
                 {
                     // exceptions thrown here should not happen "in real life" under normal
                     // compilation. if there are issues in real life, then i have work to do
@@ -130,7 +131,14 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                     var root = xdoc.Root;
 
                     var resources = root.Elements("data")
-                        .Select(e => ((string)e.Attribute("name"), (string)e.Element("value")))
+                        .Select(e =>
+                            (
+                                (string)e.Attribute("name"),
+                                (string)e.Element("value"),
+                                (string?)e.Element("comment"),
+                                FindParamCount((string)e.Element("value"))
+                            )
+                        )
                         .ToImmutableArray();
 
                     return new ResxFileInfo(
@@ -144,7 +152,7 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(
             context.CompilationProvider,
-            (ctx, input) =>
+            static (ctx, input) =>
             {
                 // adds an attribute to the source that the generated extension classes will use
                 // doing it this way so that the referencing project's output will truly have no
@@ -158,16 +166,13 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         );
 
         context.RegisterSourceOutput(
-            resxFiles.Where(f => !f.CanGenerate),
-            (ctx, input) =>
-            {
-                ctx.ReportDiagnostic(input.Diagnostic!);
-            }
+            resxFiles.Where(static f => !f.CanGenerate),
+            static (ctx, input) => ctx.ReportDiagnostic(input.Diagnostic!)
         );
 
         context.RegisterSourceOutput(
             resxFiles.Where(f => f.CanGenerate).Combine(context.CompilationProvider),
-            (ctx, input) =>
+            static (ctx, input) =>
             {
                 var (resxInfo, compilation) = input;
                 var (rootNamespace, projcetDirectory, relativePath, resources) = resxInfo;
@@ -245,7 +250,8 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                     resourceClassType,
                     stringLocalizer,
                     localizedString,
-                    resources!.Value
+                    resources!.Value,
+                    compilation
                 );
 
                 ctx.AddSource(
@@ -255,6 +261,36 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
             }
         );
     }
+
+    private static readonly FrozenDictionary<
+        SanitizedMemberNameFailureReason,
+        string
+    > s_reasonText = new Dictionary<SanitizedMemberNameFailureReason, string>()
+    {
+        [SanitizedMemberNameFailureReason.None] = "",
+        [SanitizedMemberNameFailureReason.Empty] = "Identifier was empty",
+        [SanitizedMemberNameFailureReason.NotMeaningful] =
+            "Generated identifier was not meaningful",
+    }.ToFrozenDictionary();
+
+    private static readonly FrozenSet<string> s_keywordTypes = new HashSet<string>()
+    {
+        "bool",
+        "byte",
+        "char",
+        "decimal",
+        "double",
+        "float",
+        "int",
+        "long",
+        "object",
+        "sbyte",
+        "short",
+        "string",
+        "uint",
+        "ulong",
+        "ushort",
+    }.ToFrozenSet();
 
     /// <summary>
     ///  This attribute class will always look the same, so it can be declared as a constant
@@ -281,13 +317,15 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
     /// <param name="stringLocalizer">Named type symbol for IStringLocalizer</param>
     /// <param name="localizedString">Named type symbol for LocalizedString</param>
     /// <param name="resources">Resources in the resx file. Item1 is the key, Item2 is the value</param>
+    /// <param name="compilation">Compilation for resolving argument types</param>
     /// <returns>Generated source code for IStringLocalizer&lt;T&gt; extension properties</returns>
     private static string ExtensionSourceGenerator(
         string resourcePath,
         INamedTypeSymbol resourceClassType,
         INamedTypeSymbol stringLocalizer,
         INamedTypeSymbol localizedString,
-        ImmutableArray<(string, string)> resources
+        ImmutableArray<(string, string, string?, ParamCountResult)> resources,
+        Compilation compilation
     )
     {
         using var stringWriter = new StringWriter();
@@ -336,13 +374,13 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
 
         var writeExtraLine = false;
 
-        foreach (var (key, value) in resources)
+        foreach (var (key, value, comment, count) in resources)
         {
             // make sure the generated member name is safe to use as an identifier
             var memberName = SanitizeKeyForMemberName(key);
             var exampleText = TruncatedExampleStringText(value);
 
-            if (memberName.CanGenerate)
+            if (memberName.CanGenerate && count.IsValid)
             {
                 // extra spacing is nice sometimes
                 if (writeExtraLine)
@@ -355,16 +393,41 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
                     $"///  Gets a string like '{SecurityElement.Escape(exampleText)}' as a <see cref=\"{localizedString.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}\" />"
                 );
                 indentedWriter.WriteLine("/// </summary>");
-                indentedWriter.WriteLine(
-                    $"public {localizedString.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {memberName.Name} => localizer[\"{key}\"];"
-                );
+                if (count.Count.Value > 0)
+                {
+                    var arguments = comment switch
+                    {
+                        { } c when c.StartsWith("Pneuma:") => ParseArgumentComment(
+                            comment.Split([':'], 2)[1],
+                            count.Count.Value,
+                            compilation
+                        ),
+                        _ =>
+                        [
+                            .. Enumerable
+                                .Range(0, count.Count.Value)
+                                .Select(i => ("object", $"param{i}")),
+                        ],
+                    };
+
+                    indentedWriter.WriteLine(
+                        $"public {localizedString.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {memberName.Name}({string.Join(", ", arguments.Select(i => $"{i.Item1} {i.Item2}"))}) => localizer[\"{key}\", {string.Join(", ", arguments.Select(i => i.Item2))}];"
+                    );
+                }
+                else
+                    indentedWriter.WriteLine(
+                        $"public {localizedString.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {memberName.Name} => localizer[\"{key}\"];"
+                    );
             }
             else
             {
                 indentedWriter.WriteLine(
                     $"// omitted property for resource `{key}` and value `{exampleText}`"
                 );
-                indentedWriter.WriteLine($"// Reason: {s_reasonText[memberName.Reason]}");
+                if (memberName.Reason is not SanitizedMemberNameFailureReason.None)
+                    indentedWriter.WriteLine($"// Reason: {s_reasonText[memberName.Reason]}");
+                if (!count.IsValid)
+                    indentedWriter.WriteLine($"// Reason: {count.InvalidReason}");
                 indentedWriter.WriteLine();
             }
 
@@ -398,19 +461,29 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         if (string.IsNullOrWhiteSpace(key))
             return SanitizedMemberNameResult.Failure(SanitizedMemberNameFailureReason.Empty);
 
+        // normalize so we can transform words with accented (but otherwise ascii) characters
+        // into an approximation
+        var normalized = key.Normalize(NormalizationForm.FormD);
+
         // stack allocating the entire possible space we might need to avoid multiple allocations
         // while constructing a string; allows us to do a single pass through the key and replace
         // as we see something invalid, with an optional spot for a prefixed underscore if necessary
-        Span<char> charSpan = stackalloc char[key.Length + 1];
+        Span<char> charSpan = stackalloc char[normalized.Length + 1];
 
         // tracking result length specifically for easier construction, and slicing at the end
         var length = 0;
 
-        for (var i = 0; i < key.Length; i++)
-        {
-            var current = key[i];
+        var firstChar = true;
 
-            // same as `IsAscii`
+        for (var i = 0; i < normalized.Length; i++)
+        {
+            var current = normalized[i];
+
+            // just skip diacritic enabling characters, no `_` necessary
+            if (char.GetUnicodeCategory(current) == UnicodeCategory.NonSpacingMark)
+                continue;
+
+            // same as `Is(Not)Ascii`
             if (current > 127)
             {
                 charSpan[length++] = '_';
@@ -418,11 +491,24 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
             }
 
             // identifiers aren't allowed to start with numbers, so prefix with an underscore
-            if (i == 0 && char.IsDigit(current))
+            if (length == 0 && char.IsDigit(current))
                 charSpan[length++] = '_';
 
             if (char.IsLetterOrDigit(current))
-                charSpan[length++] = current;
+            {
+                if (firstChar)
+                {
+                    if (current is >= 'a' and <= 'z')
+                        // when we know it's ascii, capitalizing is just a bitwise operation
+                        charSpan[length++] = (char)(current & ~0x20);
+                    else
+                        charSpan[length++] = current;
+
+                    firstChar = false;
+                }
+                else
+                    charSpan[length++] = current;
+            }
             else
                 charSpan[length++] = '_';
         }
@@ -457,56 +543,78 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         return value;
     }
 
-    private static readonly FrozenDictionary<
-        SanitizedMemberNameFailureReason,
-        string
-    > s_reasonText = new Dictionary<SanitizedMemberNameFailureReason, string>()
+    private static ParamCountResult FindParamCount(string value)
     {
-        [SanitizedMemberNameFailureReason.None] = "",
-        [SanitizedMemberNameFailureReason.Empty] = "Identifier was empty",
-        [SanitizedMemberNameFailureReason.NotMeaningful] =
-            "Generated identifier was not meaningful",
-    }.ToFrozenDictionary();
+        try
+        {
+            var compositeFormat = CompositeFormat.Parse(value);
 
-    private readonly record struct SanitizedMemberNameResult(string? Name)
-    {
-        [MemberNotNullWhen(true, nameof(Name))]
-        public bool CanGenerate => Name is not null;
-
-        public SanitizedMemberNameFailureReason Reason { get; private init; } =
-            SanitizedMemberNameFailureReason.None;
-
-        public static SanitizedMemberNameResult Failure(SanitizedMemberNameFailureReason reason) =>
-            new() { Reason = reason };
+            return new(compositeFormat.MinimumArgumentCount);
+        }
+        catch
+        {
+            return ParamCountResult.Invalid("Invalid format string");
+        }
     }
 
-    private readonly record struct ResxFileInfo(
-        string? RootNamespace,
-        string? ProjectDirectory,
-        string? RelativePath,
-        ImmutableArray<(string, string)>? Resources
+    private static ImmutableArray<(string, string)> ParseArgumentComment(
+        string comment,
+        int expectedCount,
+        Compilation compilation
     )
     {
-        [MemberNotNullWhen(
-            true,
-            nameof(RootNamespace),
-            nameof(ProjectDirectory),
-            nameof(RelativePath),
-            nameof(Resources)
-        )]
-        [MemberNotNullWhen(false, nameof(Diagnostic))]
-        public bool CanGenerate => Diagnostic is null;
+        var args = comment.Split(';');
 
-        public Diagnostic? Diagnostic { get; private init; }
+        var result = ImmutableArray.CreateBuilder<(string, string)>(expectedCount);
 
-        public static ResxFileInfo Failure(Diagnostic diagnostic) =>
-            new() { Diagnostic = diagnostic };
+        for (var i = 0; i < args.Length && i < expectedCount; i++)
+        {
+            var current = args[i];
+
+            var nameIndex = current.LastIndexOf(' ');
+
+            var name = NormalizeArgumentName(current.Substring(nameIndex + 1).Trim());
+
+            var type = current.Substring(0, nameIndex).Trim();
+
+            if (!s_keywordTypes.Contains(type))
+                if (compilation.GetTypeByMetadataName(type) is INamedTypeSymbol symbol)
+                    type = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                else
+                    type = "object";
+
+            result.Add((type, name));
+        }
+
+        while (result.Count < expectedCount)
+            result.Add(("object", $"param{result.Count}"));
+
+        return result.ToImmutable();
     }
 
-    private enum SanitizedMemberNameFailureReason
+    private static string NormalizeArgumentName(string argumentName)
     {
-        None,
-        Empty,
-        NotMeaningful,
+        var normalized = argumentName.Normalize(NormalizationForm.FormD);
+
+        Span<char> result = stackalloc char[normalized.Length];
+
+        var length = 0;
+
+        for (var i = 0; i < normalized.Length; i++)
+        {
+            var current = normalized[i];
+
+            // just skip non-ascii characters
+            if (current > 127)
+                continue;
+
+            if (length == 0 && char.IsDigit(current))
+                result[length++] = '_';
+
+            if (char.IsLetterOrDigit(current))
+                result[length++] = current;
+        }
+
+        return result.ToString();
     }
 }
