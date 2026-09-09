@@ -134,7 +134,9 @@ public class StronglyTypedResxAnalyzer : DiagnosticAnalyzer
         // fine, don't bother with diagnostics (my mind could be changed on this, but we'll see)
         if (
             context.Compilation.GetTypeByMetadataName(
-                $"{resourceType.ContainingNamespace}.{resourceType.Name}StringLocalizerExtensions"
+                resourceType.ContainingNamespace.IsGlobalNamespace
+                    ? $"{resourceType.Name}StringLocalizerExtensions"
+                    : $"{resourceType.ContainingNamespace}.{resourceType.Name}StringLocalizerExtensions"
             )
             is not INamedTypeSymbol extensionContainer
         )

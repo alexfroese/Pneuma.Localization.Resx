@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Localization;
+using NodaTime;
 using SampleApi;
 using SampleApi.Extensions;
 using SampleApi.Some.Deeply.Nested;
@@ -57,6 +58,14 @@ app.MapGet(
     "from-program",
     ([FromServices] IStringLocalizer<Program> localizer) =>
         TypedResults.Ok(localizer.Formattable_now(12345, 67890))
+);
+
+app.MapGet(
+    "with-dates",
+    ([FromServices] IStringLocalizer<Program> localizer) =>
+        TypedResults.Ok(
+            localizer.Formattable_dates(new LocalDate(1990, 8, 5), new LocalDate(1993, 10, 27))
+        )
 );
 
 app.MapGet(

@@ -141,7 +141,7 @@ public class ResxGeneratorTests
                             public global::Microsoft.Extensions.Localization.LocalizedString Hello_world => localizer["Hello world"];
 
                             /// <summary>
-                            ///  Gets a string like 'i&apos;m just looking for stupid s{{'\u2026'}}' as a <see cref="global::Microsoft.Extensions.Localization.LocalizedString" />
+                            ///  Gets a string like 'i&apos;m just looking for stupid{{'\u2026'}}' as a <see cref="global::Microsoft.Extensions.Localization.LocalizedString" />
                             /// </summary>
                             public global::Microsoft.Extensions.Localization.LocalizedString _123_do_re_mi => localizer["123 do re mi"];
 

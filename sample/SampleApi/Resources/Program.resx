@@ -4,6 +4,15 @@
     <value>Such a dumb thing, why do I keep doing this</value>
   </data>
   <data name="Formattable now">
+    <comment>Pneuma: int numberOne;int numberTwo</comment>
     <value>you say '{0:N0}' i say '{1:C0}', but {{0}} shouldn't work</value>
+    </data>
+  <data name="Formattable dates">
+    <comment>Pneuma: NodaTime.LocalDate dateOne;NodaTime.LocalDate dateTwo</comment>
+    <value>you say '{0:D}' i say '{1:d}', but {{0}} shouldn't work</value>
+  </data>
+  <data name="Something Else">
+    <comment>Pneuma: NodaTime.LocalDate dateOne;NodaTime.LocalDate dateTwo</comment>
+    <value>you say '{0:D}' i say '{1:d}', but {{0}} shouldn't work</value>
   </data>
 </root>

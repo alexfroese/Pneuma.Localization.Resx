@@ -535,10 +535,10 @@ public sealed class ResxSourceGenerator : IIncrementalGenerator
         var newlineIndex = value.IndexOfAny(['\r', '\n']);
 
         if (newlineIndex is > 0 and <= 30)
-            return $"{value.Substring(0, newlineIndex)}{Ellipsis}";
+            return $"{value.Substring(0, newlineIndex).Trim()}{Ellipsis}";
 
         if (value.Length > 30)
-            return $"{value.Substring(0, 29)}{Ellipsis}";
+            return $"{value.Substring(0, 28).Trim()}{Ellipsis}";
 
         return value;
     }

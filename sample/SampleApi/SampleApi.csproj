@@ -21,4 +21,7 @@
     <AdditionalFiles Include="**\*.resx" />
     <CompilerVisibleProperty Include="MSBuildProjectDirectory" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NodaTime" />
+  </ItemGroup>
 </Project>
