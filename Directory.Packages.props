@@ -17,7 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
-    <PackageVersion Include="NodaTime" Version="3.3.3" />
+    <PackageVersion Include="NodaTime" Version="3.3.4" />
     <PackageVersion Include="TUnit" Version="1.66.27" />
   </ItemGroup>
 </Project>
